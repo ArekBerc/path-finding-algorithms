@@ -1,94 +1,152 @@
-from typing import List, Any
+class Node():
+    """A node class for A* Pathfinding"""
 
-import numpy as np
-
-
-class Node:
     def __init__(self, parent=None, position=None):
         self.parent = parent
         self.position = position
-
-        self.f = 0
-        self.h = 0
+        # cost values
         self.g = 0
+        self.h = 0
+        self.f = 0
 
+    def __eq__(self, other):
+        return self.position == other.position
+
+
+def return_path(current_node):
+    path = []
+    current = current_node
+    while current is not None:
+        path.append(current.position)
+        current = current.parent
+    return path[::-1]  # Return reversed path
+
+
+def distance(a, b): # find distance between two points
+    return (((a.position[0] - b.position[0]) ** 2) + ((a.position[1] - b.position[1]) ** 2)) ** (1 / 2)
 
 def astar(maze, start, end):
-    startNode = Node(None, start)
-    endNode = Node(None, end)
 
-    openList = []
-    closedList = []
+    # Create start and end node
+    end_node = Node(None, end)
+    end_node.g = end_node.h = end_node.f = 0
+    start_node = Node(None, start)
+    start_node.g = 0
+    start_node.h = ((start_node.position[0] - end_node.position[0]) ** 2) + (
+            (start_node.position[1] - end_node.position[1]) ** 2)
+    start_node.f = start_node.g + start_node.h
 
-    openList.append(startNode)
+    # Initialize both open and closed list
+    open_list = []
+    closed_list = []
 
-    while len(openList) > 0:
-        currentNode = openList[0]
-        currentIndex = 0
+    # create start node
+    open_list.append(start_node)
+    outer_iterations = 0
+    max_iterations = (len(maze[0]) * len(maze) // 2) * 10
+    # Loop until the end or the max iterations reached
+    while len(open_list) > 0:
+        outer_iterations += 1
+        if outer_iterations > max_iterations:
+            print("giving up on pathfinding too many iterations")
+            return return_path(current_node)
 
-        for index, item in enumerate(openList):
-            if item.f < currentNode.f:
-                currentNode = item
-                currentIndex = index
-        openList.pop(currentIndex)
-        closedList.append(currentNode)
+        current_node = open_list[0]
+        current_index = 0
 
-        if currentNode.position == endNode.position:
-            path = []
-            curr = currentNode
-            while curr is not None:
-                path.append(curr.position)
-                curr = curr.parent
-            return path[::-1]
+        for index, item in enumerate(open_list):
+            if item.f < current_node.f or (item.f == current_node.f and item.g < current_node.g):
+                current_node = item
+                current_index = index
 
+        open_list.pop(current_index)
+        closed_list.append(current_node)
+
+        if current_node == end_node:
+            return return_path(current_node)
+
+        # create the children nodes that possible
         children = []
-        positions = [(0, -1), (0, 1), (1, 0), (-1, 0), (1, 1), (-1, 1), (-1, -1), (1, -1)]
-        for poss in positions:
-            nodePoss = (currentNode.position[0] + poss[0], currentNode.position[1] + poss[1])
-            # check that child poss are all in the maze range
-            if nodePoss[0] > maze.shape[0]-1 or nodePoss[0] < 0 or nodePoss[1] > maze.shape[1]-1 or nodePoss[1] < 0:
-                continue
-            # is it an obstacle or a path
-            if maze[nodePoss[0]][nodePoss[1]] != 0:
+        for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]:  # Adjacent squares
+
+            node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
+            print(len(maze[len(maze)-1 ]))
+
+
+            # Make sure in range
+            if node_position[0] > (len(maze) - 1) or node_position[0] < 0 or node_position[1] > (
+                    len(maze[len(maze) - 1]) - 1) or node_position[1] < 0:
                 continue
 
-            newNode = Node(currentNode, nodePoss)
-            children.append(newNode)
+            # not a obstacle
+            if maze[node_position[0]][node_position[1]] != 0:
+                continue
+
+            # Create new node
+            new_node = Node(current_node, node_position)
+            children.append(new_node)
+
+        # Loop through children
         for child in children:
-            for closed in closedList:
-                if closed == child:
-                    continue
-            child.g = currentNode.g + 1
-            child.h = ((child.position[0] - endNode.position[0]) ** 2) + (
-                    (child.position[1] - endNode.position[1]) ** 2)
-            child.f = child.g + child.h
 
-            for opens in openList:
-                if opens.position == child.position and opens.g < child.g:
-                    continue
+            if child in closed_list:
+                continue
 
-            openList.append(child)
+            # update costs of the child if it is in openlist or create if it is not in open list
+            if current_node.g + distance(current_node,child) < child.g or child not in open_list:
+                child.g = current_node.g + distance(child, current_node)
+                child.h = distance(child, end_node)
+                child.f = child.g + child.h
+                child.parent = current_node
+                if child not in open_list:
+                    open_list.append(child)
 
 
+
+# create coordinates from rectangle indexes
 def coordinateFinder(num):
-    x = num % 36
-    y = int((num - x) / 36)
+    y = num % 36
+    x = int((num - y) / 36)
     return x, y
 
 
 def main(start, end, obstacles):
-    maze = np.zeros((36, 30))
+    maze = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ]
 
     startCoordinate = coordinateFinder(start)
     endCoordinate = coordinateFinder(end)
-
     for obstacle in obstacles:
-        obs_x,obs_y = coordinateFinder(obstacle)
-        print(obs_x)
-        print(obs_y)
-
-        maze[obs_x,obs_y] = 1
+        obs_x, obs_y = coordinateFinder(obstacle)
+        maze[obs_x][obs_y] = 1
     path = astar(maze, startCoordinate, endCoordinate)
     return path
-
-

@@ -2,12 +2,28 @@ import sys
 import a_star
 import pygame as pg
 
-# NOW IT IS NOT CAPABLE TO SOLVE HARD MAZES
-# WHEN DEFINING THE OBSTACLES DO NOT COVER FRONT OF THE RED (STARTING) POINT
+def edit_path(tuples):
+    new_tuples=[]
+    for x,y in tuples:
+        new_tuples.append((y,x))
+    return new_tuples[1:(len(new_tuples) - 1)]
+
+def coloring(a,rectangles,colorr):
+    for index, (rect, color) in enumerate(rectangles):
+        for x, y in a:
+            if index == (y * 36) + x:
+                rectangles[index] = (rect, colorr)
+                print(rectangles[index])
+def coloring2(rectangles,colorr):
+    for index, (rect, color) in enumerate(rectangles):
+        rectangles[index] = (rect, colorr)
+
+
+
 def main():
     screen = pg.display.set_mode((950, 630))
     clock = pg.time.Clock()
-
+    # define some values
     height = 30
     width = 36
     size = 20
@@ -39,45 +55,49 @@ def main():
 
         mouse_pos = pg.mouse.get_pos()
         if pg.mouse.get_pressed()[0] and 0 < mouse_pos[0] < 755:
-            # Enumerate creates tuples of a number (the index)
-            # and the rect-color tuple, so it looks like:
-            # (0, (<rect(0, 0, 20, 20)>, (255, 255, 255)))
-            # You can unpack them directly in the head of the loop.
             for index, (rect, color) in enumerate(rectangles):
                 if rect.collidepoint(mouse_pos):
-                    # Create a tuple with the new color and assign it.
+                    # define start point
                     if start is None and finish is None:
                         rectangles[index] = (rect, red)
-                        print(index)
                         start = index
+                    # define end point
                     elif start is not None and finish is None:
                         if rectangles[index] != (rect, red):
                             rectangles[index] = (rect, blue)
-                            print(index)
                             pointsCreated = True
                             finish = index
-
+                    # define obstacles
                     elif rectangles[index] != (rect, red) and rectangles[index] != (rect, blue) and rectangles[
                         index] != (rect, new_color):
-                        print(index)
                         rectangles[index] = (rect, new_color)
                         obstacles.append(index)
-        elif pg.mouse.get_pressed()[0] and 800 < mouse_pos[0] < 900 and 550 < mouse_pos[1] < 613 and pointsCreated is True and find is False:
+        # if green button pressed
+        elif pg.mouse.get_pressed()[0] and 800 < mouse_pos[0] < 900 and 550 < mouse_pos[
+            1] < 613 and pointsCreated is True and find is False:
             path = a_star.main(start, finish, obstacles)
-            path = path[1:(len(path) - 1)]
-            for index, (rect, color) in enumerate(rectangles):
-                for x, y in path:
-                    if index == (y * 36) + x:
-                        rectangles[index] = (rect, green)
-                        print(rectangles[index])
-            find = True
+            if path == None:
+                continue
+            else:
+                path = edit_path(path)
+                coloring(path,rectangles,(0,255,0))
+                find = True
+
+        # if red button pressed
+        elif pg.mouse.get_pressed()[0] and 800 < mouse_pos[0] < 900 and 470 < mouse_pos[1] < 533:
+            coloring2(rectangles,(255,255,255))
+            finish = None
+            start = None
+            obstacles = []
+            pointsCreated = False
+            find = False
         screen.fill((30, 30, 30))
         pg.draw.rect(screen, (100, 100, 100), (755, 0, 245, 630))
         pg.draw.rect(screen, green, (800, 550, 100, 63))
+        pg.draw.rect(screen, red, (800, 470, 100, 63))
         screen.blit(text, textRect)
 
-        # Now draw the rects. You can unpack the tuples
-        # again directly in the head of the for loop.
+
         for rect, color in rectangles:
             pg.draw.rect(screen, color, rect)
 
@@ -90,3 +110,5 @@ if __name__ == '__main__':
     main()
     pg.quit()
     sys.exit()
+
+
