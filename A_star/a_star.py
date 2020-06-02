@@ -55,7 +55,7 @@ def astar(maze, start, end):
         current_index = 0
 
         for index, item in enumerate(open_list):
-            if item.f < current_node.f or (item.f == current_node.f and item.g < current_node.g):
+            if item.f < current_node.f:
                 current_node = item
                 current_index = index
 
