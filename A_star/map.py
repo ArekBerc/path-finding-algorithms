@@ -2,22 +2,34 @@ import sys
 import a_star
 import pygame as pg
 
+
+# GIVE A CHANCE TO USER TO SELECT THE ALGORITHM
+# DRAW LINES BETWEEN THE WAYPOINTS
+def draw_line(start, end, screen):
+    ys = 11 + start[0] * 21
+    xs = 11 + start[1] * 21
+    ye = 12 + end[0] * 21
+    xe = 12 + end[1] * 21
+    pg.draw.line(screen, (0, 170, 0), (xs, ys), (xe, ye),5)
+
+
 def edit_path(tuples):
-    new_tuples=[]
-    for x,y in tuples:
-        new_tuples.append((y,x))
+    new_tuples = []
+    for x, y in tuples:
+        new_tuples.append((y, x))
     return new_tuples[1:(len(new_tuples) - 1)]
 
-def coloring(a,rectangles,colorr):
+
+def coloring(a, rectangles, colorr):
     for index, (rect, color) in enumerate(rectangles):
         for x, y in a:
             if index == (y * 36) + x:
                 rectangles[index] = (rect, colorr)
-                print(rectangles[index])
-def coloring2(rectangles,colorr):
+
+
+def coloring2(rectangles, colorr):
     for index, (rect, color) in enumerate(rectangles):
         rectangles[index] = (rect, colorr)
-
 
 
 def main():
@@ -48,6 +60,7 @@ def main():
     obstacles = []
     start = None
     finish = None
+    path = None
     while not done:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -76,16 +89,19 @@ def main():
         elif pg.mouse.get_pressed()[0] and 800 < mouse_pos[0] < 900 and 550 < mouse_pos[
             1] < 613 and pointsCreated is True and find is False:
             path = a_star.main(start, finish, obstacles)
-            if path == None:
+            if path is None:
                 continue
             else:
-                path = edit_path(path)
-                coloring(path,rectangles,(0,255,0))
+
+                path2 = edit_path(path)
+                coloring(path2, rectangles, (0, 255, 0))
                 find = True
 
         # if red button pressed
         elif pg.mouse.get_pressed()[0] and 800 < mouse_pos[0] < 900 and 470 < mouse_pos[1] < 533:
-            coloring2(rectangles,(255,255,255))
+            coloring2(rectangles, (255, 255, 255))
+            pg.draw.rect(screen, (50, 50, 50), (100, 100, 50, 50))
+
             finish = None
             start = None
             obstacles = []
@@ -94,12 +110,15 @@ def main():
         screen.fill((30, 30, 30))
         pg.draw.rect(screen, (100, 100, 100), (755, 0, 245, 630))
         pg.draw.rect(screen, green, (800, 550, 100, 63))
+
         pg.draw.rect(screen, red, (800, 470, 100, 63))
         screen.blit(text, textRect)
 
-
         for rect, color in rectangles:
             pg.draw.rect(screen, color, rect)
+        if path is not None:
+            for i in range(1,len(path)):
+                draw_line(path[i-1], path[i], screen)
 
         pg.display.flip()
         clock.tick(30)
@@ -110,5 +129,3 @@ if __name__ == '__main__':
     main()
     pg.quit()
     sys.exit()
-
-
