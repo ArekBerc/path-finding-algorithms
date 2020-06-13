@@ -3,8 +3,7 @@ import a_star
 import pygame as pg
 
 
-# GIVE A CHANCE TO USER TO SELECT THE ALGORITHM
-# DRAW LINES BETWEEN THE WAYPOINTS
+
 def draw_line(start, end, screen):
     ys = 11 + start[0] * 21
     xs = 11 + start[1] * 21
@@ -105,6 +104,7 @@ def main():
             finish = None
             start = None
             obstacles = []
+            path=None
             pointsCreated = False
             find = False
         screen.fill((30, 30, 30))
