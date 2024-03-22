@@ -9,8 +9,8 @@ import time
 # bence random pointler alan disinda da atilmali ama candidate pointler alan icinde kalsin diye bir check yapilmali
 # kenarlarda kalan bitis noktalarina ulasmakta zorlaniyor algoritma 
 
-# YARRRAK STEP
-# YARRAK OBSTACLE BETWEEN   KISMINA BIR COZUM LAZIM
+# Cok kotu STEP
+# Cok kotu OBSTACLE BETWEEN   KISMINA BIR COZUM LAZIM
 
 
 
